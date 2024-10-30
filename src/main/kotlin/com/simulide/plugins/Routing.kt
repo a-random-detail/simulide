@@ -9,7 +9,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 data class MustacheUser(val id: Int, val name: String)
-data class LineOfCode(val lineNumber: Int, val tokens: List<String>)
+data class LineOfCode(val lineNumber: Int, val tokens: List<String>, val leadingSpaces: String)
 
 val test = """
     function hello_world() {
@@ -36,8 +36,10 @@ fun Application.configureRouting() {
         get("/code/new") {
             val lines = test.split("\n")
             val linesOfCode = lines.mapIndexed { index, line ->
-                val split = line.split(" ", "\t")
-                LineOfCode(index, split)
+                val leadingSpace = line.takeWhile { x -> x.isWhitespace() }
+                val split = line.trimStart().split(" ", "\t")
+
+                LineOfCode(index, split, leadingSpace)
             }
             val codeContent = mapOf("lines" to linesOfCode)
             call.respond(MustacheContent("htmx/code.hbs", codeContent))

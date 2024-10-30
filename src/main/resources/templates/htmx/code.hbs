@@ -1,8 +1,13 @@
+<section class="section is-fullwidth">
 {{#lines}}
-    <div>
-        <span> {{lineNumber}}</span>
-    {{#tokens}}
-        <span> {{ . }}</span>
-    {{/tokens}}
+    <div class="is-fullwidth">
+        <span class="mgr-medium has-text-grey has-text-left"> {{lineNumber}}</span>
+        <span class="is-fullwidth has-text-left" contenteditable="true">
+            <span class="preserve-whitespace"> {{ leadingSpaces}}</span>
+            {{#tokens}}
+                <span> {{ . }}</span>
+            {{/tokens}}
+        </span>
     </div>
 {{/lines}}
+</section>
