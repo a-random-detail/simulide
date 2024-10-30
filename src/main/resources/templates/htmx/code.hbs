@@ -1,11 +1,11 @@
 <section class="section is-fullwidth">
 {{#lines}}
-    <div class="is-fullwidth">
+    <div class="container is-fullwidth">
         <span class="mgr-medium has-text-grey has-text-left"> {{lineNumber}}</span>
         <span class="is-fullwidth has-text-left" contenteditable="true">
-            <span class="preserve-whitespace"> {{ leadingSpaces}}</span>
+            <span class="preserve-whitespace"> {{ leadingSpaces }}</span>
             {{#tokens}}
-                <span> {{ . }}</span>
+                <span>{{ . }}</span>
             {{/tokens}}
         </span>
     </div>
