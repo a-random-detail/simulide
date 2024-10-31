@@ -1,7 +1,18 @@
 <section class="section is-fullwidth">
-    <pre class="container is-fullwidth">
+    <pre class="container is-fullwidth" contenteditable="true">
        {{#lines}}
-               <code class="is-fullwidth"> {{ code }}</code>
+           <code class="is-fullwidth">
+               {{ code }}
+           </code>
        {{/lines}}
     </pre>
+    <button class="button is-success my-2" onclick="runCode()">Run</button>
+    <script rel="text/javascript">
+        function runCode() {
+            var code = '';
+            var nodes = document.querySelectorAll("code") ?? [];
+            nodes.forEach(x => code = code + x.innerText);
+            eval(code);
+        }
+    </script>
 </section>

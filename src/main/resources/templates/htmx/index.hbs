@@ -8,9 +8,7 @@
         .preserve-whitespace {
             white-space: pre;
         }
-        *[contenteditable="true"]{
-            display: inline-block;
-        }
+
         code {
             counter-reset: line;
         }
@@ -24,6 +22,7 @@
 
         code > span.line-number::before {
             content: counter(line);
+            color: #e5e5e5;
         }
     </style>
 </head>
