@@ -1,6 +1,8 @@
 <html>
 <head>
-    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.3"
+            integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+            crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
     <style rel="text/css">
         .preserve-whitespace {
@@ -9,9 +11,23 @@
         *[contenteditable="true"]{
             display: inline-block;
         }
+        code {
+            counter-reset: line;
+        }
+
+        code > span.line-number {
+            display: inline-block;
+            width: 4em;
+            text-align: right;
+            counter-increment: line;
+        }
+
+        code > span.line-number::before {
+            content: counter(line);
+        }
     </style>
 </head>
 <body>
-<div class="container" hx-get="/code/new" hx-target="this" hx-trigger="load"> </div>
+<div class="container" hx-get="/code/new" hx-target="this" hx-trigger="load"></div>
 </body>
 </html>
