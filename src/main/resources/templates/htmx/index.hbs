@@ -4,6 +4,7 @@
             integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
             crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <link rel="stylesheet" type="text/css" href="lib/jasmine-2.9.1/jasmine.css" >
     <style rel="text/css">
         .preserve-whitespace {
             white-space: pre;
@@ -14,7 +15,6 @@
         }
 
         code > span.line-number {
-            display: inline-block;
             width: 4em;
             text-align: right;
             counter-increment: line;
@@ -28,5 +28,6 @@
 </head>
 <body>
 <div class="container" hx-get="/code/new" hx-target="this" hx-trigger="load"></div>
+<div class="container" hx-get="/code/test/new" hx-target="this" hx-trigger="load"></div>
 </body>
 </html>

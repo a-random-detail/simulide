@@ -1,0 +1,36 @@
+<section class="section is-fullwidth">
+    <pre class="container is-fullwidth" contenteditable="true">
+       {{#lines}}
+           <code class="is-fullwidth test">
+               {{ code }}
+           </code>
+       {{/lines}}
+    </pre>
+    <button class="button is-success my-2" onclick="runTests()">Run Tests</button>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.6.0/jasmine.css"></link>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.6.0/jasmine.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.6.0/jasmine-html.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.6.0/boot.js"></script>
+    <script rel="text/javascript">
+        function runTests() {
+            let oldTestScripts = document.getElementsByClassName("testSource");
+            while (oldTestScripts.length > 0) {
+                oldTestScripts[0].parentNode.removeChild(oldTestScripts[0]);
+            }
+            let jasmineEnv = jasmine.getEnv();
+
+            let testCode = '';
+            let nodes = document.querySelectorAll("code.test") ?? [];
+            nodes.forEach(x => testCode = testCode + x.innerText);
+            var cleaned = testCode.replaceAll('\n', ' ').trim()
+
+            let script = document.createElement('script');
+            script.classList.add("testSource");
+            script.text = cleaned;
+            document.head.appendChild(script);
+
+            jasmineEnv.execute();
+        }
+
+    </script>
+</section>

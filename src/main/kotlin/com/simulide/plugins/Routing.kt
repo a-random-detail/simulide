@@ -11,12 +11,20 @@ import io.ktor.server.routing.*
 data class MustacheUser(val id: Int, val name: String)
 data class LineOfCode(val code: String)
 
-val test = """
+val codeUnderTest = """
     function hello_world() {
         console.log("hello, world!");
     }
     
     hello_world();
+""".trimIndent()
+
+val testCode = """
+    describe("Testing", function() {
+      it("the first", function() {
+        expect(true).toBe(false);
+      });
+    });
 """.trimIndent()
 
 fun Application.configureRouting() {
@@ -34,9 +42,15 @@ fun Application.configureRouting() {
         }
 
         get("/code/new") {
-            val lines = test.split("\n").map { x -> LineOfCode(x)}
+            val lines = codeUnderTest.split("\n").map { x -> LineOfCode(x)}
             val codeContent = mapOf("lines" to lines)
             call.respond(MustacheContent("htmx/code.hbs", codeContent))
+        }
+
+        get("/code/test/new") {
+            val lines = testCode.split("\n").map { x -> LineOfCode(x) }
+            val testContent = mapOf("lines" to lines)
+            call.respond(MustacheContent("htmx/test.hbs", testContent))
         }
     }
 }
