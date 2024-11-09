@@ -39,7 +39,7 @@
             <!-- User Actions -->
             <div class="level-right">
                 <div class="level-item">
-                    <button class="button is-info" hx-post="/save-code" hx-trigger="click" hx-target="#notification" hx-ext="saveCode" hx-headers='{"X-CSRF-Token": "{{ data.csrfToken }}" }'>Save</button>
+                    <button class="button is-info" hx-post="/save-code" hx-trigger="click" hx-target="#notification" hx-ext="saveCode">Save</button>
                 </div>
                 <div class="level-item">
                     <button class="button is-primary" hx-post="/execute-tests" hx-trigger="click" hx-target="#test-results">Run Tests</button>
@@ -136,6 +136,7 @@
     onEvent: function (name, evt) {
       if (name === "htmx:configRequest") {
         evt.detail.headers['Content-Type'] = "application/json";
+        evt.detail.headers['X-CSRF-Token'] = {{ data.csrfToken }};
       }
     },
     encodeParameters: function(xhr, parameters, elt) {
