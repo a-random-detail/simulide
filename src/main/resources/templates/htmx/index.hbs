@@ -3,6 +3,7 @@
     <meta charset="UTF-8">
     <title>SimulIDE - Collaborative Code Editor</title>
     <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
     <style>
         /* Additional custom styles */
@@ -38,7 +39,7 @@
             <!-- User Actions -->
             <div class="level-right">
                 <div class="level-item">
-                    <button class="button is-info" hx-post="/save-code" hx-target="#notification">Save</button>
+                    <button class="button is-info" hx-post="/save-code" hx-trigger="click" hx-target="#notification" hx-ext="saveCode" hx-headers='{"X-CSRF-Token": "{{ data.csrfToken }}" }'>Save</button>
                 </div>
                 <div class="level-item">
                     <button class="button is-primary" hx-post="/execute-tests" hx-trigger="click" hx-target="#test-results">Run Tests</button>
@@ -130,5 +131,23 @@
         </div>
     </div>
 </section>
+<script>
+  htmx.defineExtension('saveCode', {
+    onEvent: function (name, evt) {
+      if (name === "htmx:configRequest") {
+        evt.detail.headers['Content-Type'] = "application/json";
+      }
+    },
+    encodeParameters: function(xhr, parameters, elt) {
+      xhr.overrideMimeType('text/json'); // override default mime type
+      const editorContent = document.getElementById("code-editor").innerText;
+      const body = {
+         code: editorContent
+      };
+      return (JSON.stringify(body));
+    }
+  });
+</script>
+
 </body>
 </html>
