@@ -135,8 +135,8 @@
   htmx.defineExtension('saveCode', {
     onEvent: function (name, evt) {
       if (name === "htmx:configRequest") {
-        evt.detail.headers['Content-Type'] = "application/json";
-        evt.detail.headers['X-CSRF-Token'] = {{ data.csrfToken }};
+        evt.detail.headers['Content-Type'] = 'application/json';
+        evt.detail.headers['X-CSRF-Token'] = '{{ data.csrfToken }}';
       }
     },
     encodeParameters: function(xhr, parameters, elt) {
