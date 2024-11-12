@@ -42,7 +42,6 @@ fun Application.configureRouting() {
 
         post("/save-code" ) {
             val payload = call.receive<ExecutableCode>()
-            println(">>>> payload parsed: $payload")
             call.respond(HttpStatusCode.Created, payload)
         }
     }
