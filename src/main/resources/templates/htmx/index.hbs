@@ -132,22 +132,39 @@
     </div>
 </section>
 <script>
-  htmx.defineExtension('saveCode', {
-    onEvent: function (name, evt) {
-      if (name === "htmx:configRequest") {
-        evt.detail.headers['Content-Type'] = 'application/json';
-        evt.detail.headers['X-CSRF-Token'] = '{{ data.csrfToken }}';
-      }
+    htmx.defineExtension('saveCode', {
+      onEvent: function (name, evt) {
+        if (name === "htmx:configRequest") {
+            addCodeHeaders(evt);
+        }
     },
     encodeParameters: function(xhr, parameters, elt) {
       xhr.overrideMimeType('text/json'); // override default mime type
-      const editorContent = document.getElementById("code-editor").innerText;
-      const body = {
-         code: editorContent
-      };
-      return (JSON.stringify(body));
+      return buildPayloadForEditors();
     }
   });
+
+  const buildPayloadForEditors = () => {
+      const codeContent = document.getElementById('code-editor').innerText;
+      const testContent = document.getElementById('test-editor').innerText;
+
+      const body = {
+         test: testContent,
+         code: codeContent
+      };
+      return (JSON.stringify(body));
+  };
+
+  const addCodeHeaders = (evt) => {
+    addHeaderToEventDetails(evt, 'X-CSRF-Token', '{{ data.csrfToken }}');
+    addHeaderToEventDetails(evt, 'Content-Type', 'application/json');
+  };
+
+  const addHeaderToEventDetails = (evt, key, value)  => {
+    evt.detail.headers[key] = value;
+  };
+
+
 </script>
 
 </body>
