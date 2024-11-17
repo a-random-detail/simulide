@@ -1,5 +1,6 @@
 package com.simulide.plugins
 
+import com.simulide.domain.UuidSerializerModule
 import com.simulide.plugins.domain.Document
 import com.simulide.plugins.domain.DocumentService
 import com.simulide.plugins.domain.Operation
@@ -11,11 +12,20 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.contextual;
+import kotlinx.serialization.modules.SerializersModule
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.*
 
+@Serializable
+data class CreateDocumentRequest(val name: String, val content: String)
+
+val customSerializerModule = SerializersModule {
+    contextual(UUID::class, UuidSerializerModule)
+}
 fun Application.configureRouting() {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
@@ -24,6 +34,7 @@ fun Application.configureRouting() {
     }
     install(ContentNegotiation) {
         json(Json {
+            serializersModule = customSerializerModule
             prettyPrint = true
             isLenient = true
             ignoreUnknownKeys = true
@@ -59,6 +70,17 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.Conflict, "Conflict ${e.localizedMessage}")
             }
         }
+
+        post("/documents") {
+            try {
+                val document = call.receive<CreateDocumentRequest>()
+                val createdDocument = documentService.createDocument(document)
+                call.respond(createdDocument)
+            } catch (e: IllegalArgumentException) {
+                //TODO: make a validation function
+                call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
+            }
+        }
     }
 }
 
@@ -72,4 +94,3 @@ fun Application.connectToPostgres(): Connection {
     val url = "jdbc:postgresql://$host:$port/$dbName"
     return DriverManager.getConnection(url, user, password)
 }
-
