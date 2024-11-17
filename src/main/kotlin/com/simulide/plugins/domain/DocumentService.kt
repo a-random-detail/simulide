@@ -1,12 +1,17 @@
 package com.simulide.plugins.domain
 
+import com.simulide.plugins.CreateDocumentRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.sql.Connection
 import java.util.UUID
 
-data class Operation(val documentId: UUID, val type: String, val position: Int, val content: String?, val version: Int)
-data class Document(val id: UUID, val name: String, val content: String, val version: Int)
+@Serializable
+data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: String, val position: Int, val content: String?, val version: Int)
+@Serializable
+data class Document(@Contextual val id: UUID, val name: String, val content: String, val version: Int)
 
 class DocumentService(private val dbConnection: Connection) {
 
@@ -28,7 +33,7 @@ class DocumentService(private val dbConnection: Connection) {
         }
     }
 
-    suspend fun applyOperation(documentId: UUID, operation: Operation): Document {
+    fun applyOperation(documentId: UUID, operation: Operation): Operation {
         // Fetch the current document state
         val document = dbConnection.prepareStatement(SELECT_DOCUMENT_BY_ID).use { stmt ->
             stmt.setObject(1, documentId)
@@ -64,23 +69,38 @@ class DocumentService(private val dbConnection: Connection) {
             stmt.executeUpdate()
         }
 
+        val appliedOperation = operation.copy(id = UUID.randomUUID(), version = currentVersion + 1)
+
         // Log the operation
         dbConnection.prepareStatement(CREATE_OPERATION).use { stmt ->
-            stmt.setObject(1, documentId)
-            stmt.setString(2, operation.type)
-            stmt.setInt(3, operation.position)
-            stmt.setString(4, operation.content)
-            stmt.setInt(5, currentVersion + 1)
+            stmt.setObject(1, appliedOperation.id)
+            stmt.setObject(2, documentId)
+            stmt.setString(3, appliedOperation.type)
+            stmt.setInt(4, appliedOperation.position)
+            stmt.setString(5, appliedOperation.content)
+            stmt.setInt(6, currentVersion + 1)
             stmt.executeUpdate()
         }
 
-        // Return the updated document
-        return Document(
-            id = documentId,
-            name = "", // Name is omitted in this example; retrieve if necessary
-            content = updatedContent,
-            version = currentVersion + 1
+        return appliedOperation
+    }
+
+    fun createDocument(document: CreateDocumentRequest): Any {
+        val createdDocument = Document(
+            id = UUID.randomUUID(),
+            name = document.name,
+            content = document.content,
+            version = 1
         )
+        dbConnection.prepareStatement(CREATE_DOCUMENT).use { stmt ->
+            stmt.setObject(1, createdDocument.id)
+            stmt.setString(2, createdDocument.name)
+            stmt.setString(3, createdDocument.content)
+            stmt.setInt(4, createdDocument.version)
+            stmt.executeUpdate()
+        }
+
+        return createdDocument
     }
 
     companion object {
@@ -98,8 +118,14 @@ class DocumentService(private val dbConnection: Connection) {
             """
         private const val CREATE_OPERATION =
            """
-           INSERT INTO operations (document_id, type, position, content, version, created_at)
-           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+           INSERT INTO operations (id, document_id, type, position, content, version, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+           """
+
+        private const val CREATE_DOCUMENT =
+            """
+           INSERT INTO documents (id, name, content, version, created_at)
+           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
            """
     }
 }
