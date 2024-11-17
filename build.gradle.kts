@@ -4,6 +4,7 @@ val logback_version: String = "1.4.14"
 val postgres_version: String = "42.5.1"
 val h2_version: String = "2.2.224"
 val serialization_version: String = "2.0.0"
+val flyway_version: String = "8.5.10"
 
 
 plugins {
@@ -36,8 +37,8 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("org.postgresql:postgresql:$postgres_version")
+    implementation("org.flywaydb:flyway-core:$flyway_version")
     implementation("com.h2database:h2:$h2_version")
-    implementation("io.ktor:ktor-server-mustache-jvm")
     implementation("io.ktor:ktor-serialization-jackson-jvm")
     implementation("io.ktor:ktor-server-metrics-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
