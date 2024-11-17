@@ -9,7 +9,6 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     configureSockets()
-    configureDatabases()
     configureMonitoring()
     configureHTTP()
     configureSecurity()
