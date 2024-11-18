@@ -38,12 +38,15 @@ fun Application.documentRoutes(documentService: DocumentService) {
     }
     routing {
         get("/documents/{id}") {
-            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.BadRequest, "Invalid document ID")
-            val docUUID = UUID.fromString(documentId as String)
-
-            val document = documentService.getById(docUUID) ?: call.respond(HttpStatusCode.NotFound, "Unable to find document")
-
-            call.respond(document)
+            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.BadRequest, "Invalid/missing document ID")
+            try {
+                val docUUID = UUID.fromString(documentId as String)
+                val document =
+                    documentService.getById(docUUID) ?: call.respond(HttpStatusCode.NotFound, "Invalid/missing document ID")
+                call.respond(document)
+            } catch( e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.NotFound, "Invalid/missing document ID")
+            }
         }
 
         post("/documents/{id}/operations") {
