@@ -1,8 +1,6 @@
 package com.simulide
 
-import com.fasterxml.jackson.databind.ser.std.UUIDSerializer
 import com.simulide.domain.UuidSerializerModule
-import com.simulide.plugins.customSerializerModule
 import com.simulide.plugins.documentRoutes
 import com.simulide.plugins.domain.Document
 import com.simulide.plugins.domain.DocumentService
@@ -16,7 +14,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 import kotlin.test.assertEquals
 
@@ -46,7 +44,7 @@ class DocumentTest {
     }
 
     @Test
-    fun `GET documents by id returns document`() = testApplication {
+    fun `GET documents by ID returns document`() = testApplication {
        val documentId = UUID.randomUUID()
        val expectedDocument = Document(
            id = documentId,
@@ -60,6 +58,7 @@ class DocumentTest {
                 documentRoutes(DocumentService(dataSource = inMemoryDb))
             }
         }
+
         createDocument(
             dataSource = inMemoryDb,
             document = expectedDocument
@@ -73,6 +72,34 @@ class DocumentTest {
             assertEquals(expectedDocument.name, response.name)
             assertEquals(expectedDocument.content, response.content)
             assertEquals(expectedDocument.version, response.version)
+        }
+    }
+
+    @Test
+    fun `GET document by ID returns not found when no matching document found`() = testApplication {
+        val documentId = UUID.randomUUID()
+        application {
+            routing {
+                documentRoutes(DocumentService(dataSource = inMemoryDb))
+            }
+        }
+
+        client.get("/documents/$documentId").apply {
+            assertEquals(HttpStatusCode.NotFound, status)
+        }
+
+    }
+
+    @Test
+    fun `GET document by ID returns not found when non-UUID given as id`() = testApplication {
+        application {
+            routing {
+                documentRoutes(DocumentService(dataSource = inMemoryDb))
+            }
+        }
+
+        client.get("/documents/123").apply {
+            assertEquals(HttpStatusCode.NotFound, status)
         }
     }
 }
