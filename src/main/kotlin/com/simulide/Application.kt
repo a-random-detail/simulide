@@ -48,7 +48,7 @@ fun Application.createHikariDataSource() : DataSource {
         jdbcUrl = "jdbc:postgresql://$host:$port/$dbName"
         username = user
         password = configPass
-        driverClassName = "org.h2.driver"
+        driverClassName = "org.postgresql.Driver"
 
         maximumPoolSize = 10
         minimumIdle = 2
