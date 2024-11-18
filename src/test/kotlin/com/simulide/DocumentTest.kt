@@ -1,5 +1,8 @@
 package com.simulide
 
+import com.fasterxml.jackson.databind.ser.std.UUIDSerializer
+import com.simulide.domain.UuidSerializerModule
+import com.simulide.plugins.customSerializerModule
 import com.simulide.plugins.documentRoutes
 import com.simulide.plugins.domain.Document
 import com.simulide.plugins.domain.DocumentService
@@ -9,16 +12,28 @@ import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
 import javax.sql.DataSource
-import kotlin.math.exp
 import kotlin.test.assertEquals
 
 class DocumentTest {
     private lateinit var inMemoryDb: DataSource
+
+    val customSerializerModule = SerializersModule {
+        contextual(UUID::class, UuidSerializerModule)
+    }
+
+    val json = Json {
+        serializersModule = customSerializerModule
+        prettyPrint = true
+        isLenient = true
+        ignoreUnknownKeys = true
+
+    }
 
     @Before
     fun setup() {
@@ -39,20 +54,20 @@ class DocumentTest {
            content = "hello \n world!",
            version = 54)
 
-        createDocument(
-            dataSource = inMemoryDb,
-            document = expectedDocument
-        )
 
         application {
             routing {
                 documentRoutes(DocumentService(dataSource = inMemoryDb))
             }
         }
+        createDocument(
+            dataSource = inMemoryDb,
+            document = expectedDocument
+        )
 
         client.get("/documents/$documentId").apply {
             assertEquals(HttpStatusCode.OK, status)
-            val response = Json.decodeFromString<Document>(bodyAsText())
+            val response = json.decodeFromString<Document>(bodyAsText())
 
             assertEquals(expectedDocument.id, response.id)
             assertEquals(expectedDocument.name, response.name)
