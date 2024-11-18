@@ -7,100 +7,100 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.sql.Connection
 import java.util.UUID
+import javax.sql.DataSource
 
 @Serializable
 data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: String, val position: Int, val content: String?, val version: Int)
 @Serializable
 data class Document(@Contextual val id: UUID, val name: String, val content: String, val version: Int)
 
-class DocumentService(private val dbConnection: Connection) {
+class DocumentService(private val dataSource: DataSource) {
 
-    suspend fun getById(id: UUID): Document? = withContext(Dispatchers.IO) {
-        return@withContext dbConnection.prepareStatement(Companion.SELECT_DOCUMENT_BY_ID).use { stmt ->
+    private fun <T> withConnection(action: (Connection) -> T): T {
+        dataSource.connection.use { connection ->
+            return action(connection)
+        }
+    }
+
+    fun getById(id: UUID): Document? {
+        return withConnection { connection ->
+            connection.prepareStatement(SELECT_DOCUMENT_BY_ID).use { stmt ->
             stmt.setObject(1, id)
-            val resultSet = stmt.executeQuery()
 
-            if (resultSet.next()) {
-                Document(
-                    id = resultSet.getObject("id") as UUID,
-                    name = resultSet.getString("name"),
-                    content = resultSet.getString("content"),
-                    version = resultSet.getInt("version")
-                )
-            } else {
-                null
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        return@withConnection Document(
+                            id = rs.getObject("id", UUID::class.java),
+                            name = rs.getString("name"),
+                            content = rs.getString("content"),
+                            version = rs.getInt("version")
+                        )
+                    } else return@withConnection null
+                }
             }
         }
     }
 
     fun applyOperation(documentId: UUID, operation: Operation): Operation {
-        // Fetch the current document state
-        val document = dbConnection.prepareStatement(SELECT_DOCUMENT_BY_ID).use { stmt ->
-            stmt.setObject(1, documentId)
-            val resultSet = stmt.executeQuery()
-            if (resultSet.next()) {
-                resultSet.getString("content") to resultSet.getInt("version")
-            } else {
-                throw IllegalArgumentException("Document not found")
+        return withConnection { connection ->
+            val document = getById(documentId) ?: throw IllegalArgumentException("Document not found")
+
+            if (operation.version != document.version) {
+                throw IllegalStateException("Version mismatch: expected ${document.version}, got ${operation.version}")
             }
+
+            val updatedContent = when (operation.type) {
+                "insert" -> document.content.substring(0, operation.position) +
+                        (operation.content ?: "") +
+                        document.content.substring(operation.position)
+                "delete" -> document.content.substring(0, operation.position) +
+                        document.content.substring(operation.position + (operation.content?.length ?: 0))
+                else -> throw IllegalArgumentException("Invalid operation type")
+            }
+
+            // Update the document and increment the version
+            connection.prepareStatement(Companion.UPDATE_DOCUMENT).use { stmt ->
+                stmt.setString(1, updatedContent)
+                stmt.setObject(2, documentId)
+                stmt.executeUpdate()
+            }
+
+            val appliedOperation = operation.copy(id = UUID.randomUUID(), version = document.version + 1)
+
+            // Log the operation
+            connection.prepareStatement(CREATE_OPERATION).use { stmt ->
+                stmt.setObject(1, appliedOperation.id)
+                stmt.setObject(2, documentId)
+                stmt.setString(3, appliedOperation.type)
+                stmt.setInt(4, appliedOperation.position)
+                stmt.setString(5, appliedOperation.content)
+                stmt.setInt(6, document.version + 1)
+                stmt.executeUpdate()
+            }
+
+            return@withConnection appliedOperation
         }
-
-        val (currentContent, currentVersion) = document
-
-        // Validate the operation's version
-        if (operation.version != currentVersion) {
-            throw IllegalStateException("Version mismatch: expected $currentVersion, got ${operation.version}")
-        }
-
-        // Apply the operation
-        val updatedContent = when (operation.type) {
-            "insert" -> currentContent.substring(0, operation.position) +
-                    (operation.content ?: "") +
-                    currentContent.substring(operation.position)
-            "delete" -> currentContent.substring(0, operation.position) +
-                    currentContent.substring(operation.position + (operation.content?.length ?: 0))
-            else -> throw IllegalArgumentException("Invalid operation type")
-        }
-
-        // Update the document and increment the version
-        dbConnection.prepareStatement(Companion.UPDATE_DOCUMENT).use { stmt ->
-            stmt.setString(1, updatedContent)
-            stmt.setObject(2, documentId)
-            stmt.executeUpdate()
-        }
-
-        val appliedOperation = operation.copy(id = UUID.randomUUID(), version = currentVersion + 1)
-
-        // Log the operation
-        dbConnection.prepareStatement(CREATE_OPERATION).use { stmt ->
-            stmt.setObject(1, appliedOperation.id)
-            stmt.setObject(2, documentId)
-            stmt.setString(3, appliedOperation.type)
-            stmt.setInt(4, appliedOperation.position)
-            stmt.setString(5, appliedOperation.content)
-            stmt.setInt(6, currentVersion + 1)
-            stmt.executeUpdate()
-        }
-
-        return appliedOperation
     }
 
-    fun createDocument(document: CreateDocumentRequest): Any {
-        val createdDocument = Document(
-            id = UUID.randomUUID(),
-            name = document.name,
-            content = document.content,
-            version = 1
-        )
-        dbConnection.prepareStatement(CREATE_DOCUMENT).use { stmt ->
-            stmt.setObject(1, createdDocument.id)
-            stmt.setString(2, createdDocument.name)
-            stmt.setString(3, createdDocument.content)
-            stmt.setInt(4, createdDocument.version)
-            stmt.executeUpdate()
-        }
+    fun createDocument(document: CreateDocumentRequest): Document {
+        return withConnection { connection ->
+            val createdDocument = Document(
+                id = UUID.randomUUID(),
+                name = document.name,
+                content = document.content,
+                version = 1
+            )
+            connection.prepareStatement(CREATE_DOCUMENT).use { stmt ->
+                stmt.setObject(1, createdDocument.id)
+                stmt.setString(2, createdDocument.name)
+                stmt.setString(3, createdDocument.content)
+                stmt.setInt(4, createdDocument.version)
+                stmt.executeUpdate()
+            }
 
-        return createdDocument
+            return@withConnection createdDocument
+
+        }
     }
 
     companion object {

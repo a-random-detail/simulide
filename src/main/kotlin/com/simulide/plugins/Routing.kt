@@ -1,7 +1,6 @@
 package com.simulide.plugins
 
 import com.simulide.domain.UuidSerializerModule
-import com.simulide.plugins.domain.Document
 import com.simulide.plugins.domain.DocumentService
 import com.simulide.plugins.domain.Operation
 import io.ktor.http.*
@@ -14,11 +13,11 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.contextual;
 import kotlinx.serialization.modules.SerializersModule
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.*
+import javax.sql.DataSource
 
 @Serializable
 data class CreateDocumentRequest(val name: String, val content: String)
@@ -26,7 +25,7 @@ data class CreateDocumentRequest(val name: String, val content: String)
 val customSerializerModule = SerializersModule {
     contextual(UUID::class, UuidSerializerModule)
 }
-fun Application.configureRouting() {
+fun Application.documentRoutes(documentService: DocumentService) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             call.respondText(text = "500: $cause" , status = HttpStatusCode.InternalServerError)
@@ -40,9 +39,6 @@ fun Application.configureRouting() {
             ignoreUnknownKeys = true
         })
     }
-    val dbConnection: Connection = connectToPostgres()
-    val documentService: DocumentService = DocumentService(dbConnection)
-
     routing {
         get("/documents/{id}") {
             val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.BadRequest, "Invalid document ID")
