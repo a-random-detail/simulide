@@ -29,12 +29,13 @@ private const val CREATE_DOCUMENT =
     """
 
 fun createDocument(dataSource: DataSource, document: Document): Document {
-    dataSource.connection.use { connection ->
-        connection.prepareStatement(CREATE_DOCUMENT).apply {
-            setObject(1, document.id)
-            setString(2, document.name)
-            setString(3, document.content)
-            setInt(4, document.version)
+     dataSource.connection.use { connection ->
+        connection.prepareStatement(CREATE_DOCUMENT).use { stmt ->
+            stmt.setObject(1, document.id)
+            stmt.setString(2, document.name)
+            stmt.setString(3, document.content)
+            stmt.setInt(4, document.version)
+            stmt.executeUpdate()
         }
     }
     return document

@@ -31,6 +31,11 @@ fun setupTestDatabase(): DataSource {
 
 fun cleanupDatabase(dataSource: DataSource) {
     dataSource.connection.use { connection ->
-        connection.createStatement().executeUpdate("TRUNCATE TABLE operations, documents")
+        connection.createStatement().use { statement ->
+            statement.execute("SET REFERENTIAL_INTEGRITY FALSE")
+            statement.execute("TRUNCATE TABLE operations")
+            statement.execute("TRUNCATE TABLE documents")
+            statement.execute("SET REFERENTIAL_INTEGRITY TRUE")
+        }
     }
 }

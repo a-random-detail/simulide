@@ -14,10 +14,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import java.sql.Connection
-import java.sql.DriverManager
 import java.util.*
-import javax.sql.DataSource
 
 @Serializable
 data class CreateDocumentRequest(val name: String, val content: String)
