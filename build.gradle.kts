@@ -5,7 +5,10 @@ val postgres_version: String = "42.5.1"
 val h2_version: String = "2.2.224"
 val serialization_version: String = "2.0.0"
 val flyway_version: String = "8.5.10"
-
+val server_tests_version: String = "2.3.3"
+val mockk_version: String = "1.13.5"
+val kotlinx_serialization_version: String = "1.6.0"
+val hikari_version: String = "5.0.1"
 
 plugins {
     //TODO: fix the variable references
@@ -39,6 +42,7 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgres_version")
     implementation("org.flywaydb:flyway-core:$flyway_version")
     implementation("com.h2database:h2:$h2_version")
+    implementation("com.zaxxer:HikariCP:$hikari_version")
     implementation("io.ktor:ktor-serialization-jackson-jvm")
     implementation("io.ktor:ktor-server-metrics-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
@@ -54,4 +58,7 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml")
     implementation("io.ktor:ktor-server-test-host-jvm")
     implementation("org.jetbrains.kotlin:kotlin-test-junit")
+    testImplementation("io.ktor:ktor-server-tests:$server_tests_version")
+    testImplementation("io.mockk:mockk:$mockk_version")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
 }
