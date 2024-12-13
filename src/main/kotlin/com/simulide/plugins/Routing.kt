@@ -58,7 +58,7 @@ fun Application.documentRoutes(documentService: DocumentService) {
 
             try {
                 val operation = documentService.applyOperation(docUUID, operation)
-                call.respond(operation)
+                call.respond(HttpStatusCode.Created, operation)
             } catch (e: IllegalArgumentException) {
                 //TODO: make a validation function
                 call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
@@ -71,11 +71,16 @@ fun Application.documentRoutes(documentService: DocumentService) {
             try {
                 val document = call.receive<CreateDocumentRequest>()
                 val createdDocument = documentService.createDocument(document)
-                call.respond(createdDocument)
+                call.respond(HttpStatusCode.Created, createdDocument)
             } catch (e: IllegalArgumentException) {
                 //TODO: make a validation function
                 call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
+            } catch (e: Throwable) {
+                log.info("Threw error: ${e.message}")
+                var foo = "bar"
+                call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
             }
+
         }
     }
 }

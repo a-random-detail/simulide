@@ -1,6 +1,7 @@
 package com.simulide
 
 import com.simulide.domain.UuidSerializerModule
+import com.simulide.plugins.CreateDocumentRequest
 import com.simulide.plugins.documentRoutes
 import com.simulide.plugins.domain.Document
 import com.simulide.plugins.domain.DocumentService
@@ -9,6 +10,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import org.junit.After
@@ -17,8 +19,9 @@ import org.junit.Test
 import java.util.*
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-class DocumentTest {
+class PostDocumentTest {
     private lateinit var inMemoryDb: DataSource
 
     val customSerializerModule = SerializersModule {
@@ -44,13 +47,11 @@ class DocumentTest {
     }
 
     @Test
-    fun `GET documents by ID returns document`() = testApplication {
-       val documentId = UUID.randomUUID()
-       val expectedDocument = Document(
-           id = documentId,
+    fun `POST document returns document with created status`() = testApplication {
+       val input = CreateDocumentRequest(
            name = "Test doc here",
            content = "hello \n world!",
-           version = 54)
+       )
 
 
         application {
@@ -59,47 +60,50 @@ class DocumentTest {
             }
         }
 
-        createDocument(
-            dataSource = inMemoryDb,
-            document = expectedDocument
-        )
-
-        client.get("/documents/$documentId").apply {
-            assertEquals(HttpStatusCode.OK, status)
+        client.post("/documents") {
+            setBody(json.encodeToString(input))
+            contentType(ContentType.Application.Json)
+        }.apply {
+            assertEquals(HttpStatusCode.Created, status)
             val response = json.decodeFromString<Document>(bodyAsText())
 
-            assertEquals(expectedDocument.id, response.id)
-            assertEquals(expectedDocument.name, response.name)
-            assertEquals(expectedDocument.content, response.content)
-            assertEquals(expectedDocument.version, response.version)
+            assertNotNull(response.id)
+            assertEquals(input.name, response.name)
+            assertEquals(input.content, response.content)
+            assertEquals(1, response.version)
         }
     }
 
     @Test
-    fun `GET document by ID returns not found when no matching document found`() = testApplication {
-        val documentId = UUID.randomUUID()
+    fun `POST document returns badrequest when empty object sent`() = testApplication {
         application {
             routing {
                 documentRoutes(DocumentService(dataSource = inMemoryDb))
             }
         }
 
-        client.get("/documents/$documentId").apply {
-            assertEquals(HttpStatusCode.NotFound, status)
+        client.post("/documents") {
+            setBody("{}")
+            contentType(ContentType.Application.Json)
+        }.apply {
+            assertEquals(HttpStatusCode.BadRequest, status)
         }
-
     }
 
     @Test
-    fun `GET document by ID returns not found when non-UUID given as id`() = testApplication {
+    fun `POST document returns badrequest when non-json sent`() = testApplication {
         application {
             routing {
                 documentRoutes(DocumentService(dataSource = inMemoryDb))
             }
         }
 
-        client.get("/documents/123").apply {
-            assertEquals(HttpStatusCode.NotFound, status)
+        client.post("/documents") {
+            setBody("this is not json")
+            contentType(ContentType.Application.Json)
+        }.apply {
+            assertEquals(HttpStatusCode.BadRequest, status)
         }
     }
+
 }
