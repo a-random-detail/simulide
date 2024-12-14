@@ -76,7 +76,7 @@ fun Application.documentRoutes(documentService: DocumentService) {
             } catch (e: Throwable) {
                 log.info("Threw error: ${e.message}")
                 var foo = "bar"
-                call.respond(HttpStatusCode.Conflict, "Conflict: ${e.localizedMessage}")
+                call.respond(HttpStatusCode.BadRequest, "Conflict: ${e.localizedMessage}")
             }
 
         }
