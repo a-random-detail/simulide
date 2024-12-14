@@ -11,13 +11,17 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import org.flywaydb.core.api.output.OperationResult
 import java.util.*
 
 @Serializable
 data class CreateDocumentRequest(val name: String, val content: String)
+@Serializable
+data class CreateOperationRequest(val documentId: String, val type: String, val content: String, val position: Int)
 
 val customSerializerModule = SerializersModule {
     contextual(UUID::class, UuidSerializerModule)
@@ -38,7 +42,7 @@ fun Application.documentRoutes(documentService: DocumentService) {
     }
     routing {
         get("/documents/{id}") {
-            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.BadRequest, "Invalid/missing document ID")
+            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.NotFound)
             try {
                 val docUUID = UUID.fromString(documentId as String)
                 val document =
@@ -50,20 +54,17 @@ fun Application.documentRoutes(documentService: DocumentService) {
         }
 
         post("/documents/{id}/operations") {
-
-            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.BadRequest, "Invalid document ID")
+            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.NotFound)
             val docUUID = UUID.fromString(documentId as String)
-
-            val operation = call.receive<Operation>()
-
             try {
-                val operation = documentService.applyOperation(docUUID, operation)
+                val operationRequest = call.receive<CreateOperationRequest>()
+                val operation = documentService.applyOperation(docUUID, operationRequest)
                 call.respond(HttpStatusCode.Created, operation)
             } catch (e: IllegalArgumentException) {
                 //TODO: make a validation function
                 call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
-            } catch (e: IllegalStateException) {
-                call.respond(HttpStatusCode.Conflict, "Conflict ${e.localizedMessage}")
+            } catch (e: Throwable) {
+                call.respond(HttpStatusCode.BadRequest, "Invalid request body: ${e.localizedMessage}")
             }
         }
 
@@ -78,7 +79,7 @@ fun Application.documentRoutes(documentService: DocumentService) {
             } catch (e: Throwable) {
                 log.info("Threw error: ${e.message}")
                 var foo = "bar"
-                call.respond(HttpStatusCode.BadRequest, "Invalid Request: ${e.localizedMessage}")
+                call.respond(HttpStatusCode.Conflict, "Conflict: ${e.localizedMessage}")
             }
 
         }
