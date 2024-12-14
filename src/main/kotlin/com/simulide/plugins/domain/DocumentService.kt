@@ -1,6 +1,7 @@
 package com.simulide.plugins.domain
 
 import com.simulide.plugins.CreateDocumentRequest
+import com.simulide.plugins.CreateOperationRequest
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.sql.Connection
@@ -39,13 +40,9 @@ class DocumentService(private val dataSource: DataSource) {
         }
     }
 
-    fun applyOperation(documentId: UUID, operation: Operation): Operation {
+    fun applyOperation(documentId: UUID, operation: CreateOperationRequest): Operation {
         return withConnection { connection ->
             val document = getById(documentId) ?: throw IllegalArgumentException("Document not found")
-
-            if (operation.version != document.version) {
-                throw IllegalStateException("Version mismatch: expected ${document.version}, got ${operation.version}")
-            }
 
             val updatedContent = when (operation.type) {
                 "insert" -> document.content.substring(0, operation.position) +
@@ -57,13 +54,20 @@ class DocumentService(private val dataSource: DataSource) {
             }
 
             // Update the document and increment the version
-            connection.prepareStatement(Companion.UPDATE_DOCUMENT).use { stmt ->
+            connection.prepareStatement(UPDATE_DOCUMENT).use { stmt ->
                 stmt.setString(1, updatedContent)
                 stmt.setObject(2, documentId)
                 stmt.executeUpdate()
             }
 
-            val appliedOperation = operation.copy(id = UUID.randomUUID(), version = document.version + 1)
+            val appliedOperation = Operation(
+                id = UUID.randomUUID(),
+                documentId = documentId,
+                type = operation.type,
+                version = document.version + 1,
+                position = operation.position,
+                content = operation.content
+            )
 
             // Log the operation
             connection.prepareStatement(CREATE_OPERATION).use { stmt ->
