@@ -2,7 +2,6 @@ package com.simulide.plugins
 
 import com.simulide.domain.UuidSerializerModule
 import com.simulide.plugins.domain.DocumentService
-import com.simulide.plugins.domain.Operation
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -11,11 +10,9 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import org.flywaydb.core.api.output.OperationResult
 import java.util.*
 
 @Serializable
