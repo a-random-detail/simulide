@@ -1,5 +1,6 @@
 package com.simulide.plugins.domain
 
+import com.simulide.domain.OperationType
 import com.simulide.plugins.CreateDocumentRequest
 import com.simulide.plugins.CreateOperationRequest
 import kotlinx.serialization.Contextual
@@ -9,7 +10,7 @@ import java.util.*
 import javax.sql.DataSource
 
 @Serializable
-data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: String, val position: Int, val content: String?, val version: Int)
+data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: OperationType, val position: Int, val content: String?, val version: Int)
 @Serializable
 data class Document(@Contextual val id: UUID, val name: String, val content: String, val version: Int)
 
@@ -45,10 +46,10 @@ class DocumentService(private val dataSource: DataSource) {
             val document = getById(documentId) ?: throw IllegalArgumentException("Document not found")
 
             val updatedContent = when (operation.type) {
-                "insert" -> document.content.substring(0, operation.position) +
+                OperationType.insert -> document.content.substring(0, operation.position) +
                         (operation.content ?: "") +
                         document.content.substring(operation.position)
-                "delete" -> document.content.substring(0, operation.position) +
+                OperationType.delete -> document.content.substring(0, operation.position) +
                         document.content.substring(operation.position + (operation.content?.length ?: 0))
                 else -> throw IllegalArgumentException("Invalid operation type")
             }
@@ -73,7 +74,7 @@ class DocumentService(private val dataSource: DataSource) {
             connection.prepareStatement(CREATE_OPERATION).use { stmt ->
                 stmt.setObject(1, appliedOperation.id)
                 stmt.setObject(2, documentId)
-                stmt.setString(3, appliedOperation.type)
+                stmt.setString(3, appliedOperation.type.toString())
                 stmt.setInt(4, appliedOperation.position)
                 stmt.setString(5, appliedOperation.content)
                 stmt.setInt(6, document.version + 1)

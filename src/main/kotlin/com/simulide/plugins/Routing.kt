@@ -1,5 +1,6 @@
 package com.simulide.plugins
 
+import com.simulide.domain.OperationType
 import com.simulide.domain.UuidSerializerModule
 import com.simulide.plugins.domain.DocumentService
 import io.ktor.http.*
@@ -18,7 +19,7 @@ import java.util.*
 @Serializable
 data class CreateDocumentRequest(val name: String, val content: String)
 @Serializable
-data class CreateOperationRequest(val documentId: String, val type: String, val content: String, val position: Int)
+data class CreateOperationRequest(val documentId: String, val type: OperationType, val content: String?, val position: Int, val length: Int?)
 
 val customSerializerModule = SerializersModule {
     contextual(UUID::class, UuidSerializerModule)
@@ -39,11 +40,11 @@ fun Application.documentRoutes(documentService: DocumentService) {
     }
     routing {
         get("/documents/{id}") {
-            val documentId = call.parameters["id"] ?: call.respond(HttpStatusCode.NotFound)
             try {
-                val docUUID = UUID.fromString(documentId as String)
-                val document =
-                    documentService.getById(docUUID) ?: call.respond(HttpStatusCode.NotFound, "Invalid/missing document ID")
+                val documentId: UUID = call.parameters["id"].let { UUID.fromString(it) }
+                    ?: return@get call.respond(HttpStatusCode.NotFound)
+                val document = documentService.getById(documentId)
+                    ?: call.respond(HttpStatusCode.NotFound, "Invalid/missing document ID")
                 call.respond(document)
             } catch( e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.NotFound, "Invalid/missing document ID")

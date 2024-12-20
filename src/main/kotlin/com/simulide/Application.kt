@@ -16,10 +16,10 @@ fun Application.module() {
     val dataSource: DataSource = createHikariDataSource()
     val documentService: DocumentService = DocumentService(dataSource)
     runMigrations()
-    configureSockets()
     configureMonitoring()
     configureHTTP()
     configureSecurity()
+    configureSockets(documentService)
     documentRoutes(documentService)
 }
 

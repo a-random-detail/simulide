@@ -1,5 +1,6 @@
 package com.simulide
 
+import com.simulide.domain.OperationType
 import com.simulide.domain.UuidSerializerModule
 import com.simulide.plugins.CreateDocumentRequest
 import com.simulide.plugins.CreateOperationRequest
@@ -26,12 +27,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 @RunWith(Parameterized::class)
-class PostOperationTest(private val type: String) {
+class PostOperationTest(private val type: OperationType) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters
-        fun data(): List<String> {
-            return listOf("insert", "delete")
+        fun data(): List<OperationType> {
+            return listOf(OperationType.insert, OperationType.delete)
         }
     }
     private lateinit var inMemoryDb: DataSource
@@ -78,11 +79,13 @@ class PostOperationTest(private val type: String) {
         assertEquals(HttpStatusCode.Created, documentResponse.status)
         val decodedDocumentResponse = json.decodeFromString<Document>(documentResponse.bodyAsText())
 
+        val operationContent = "foo-bar-baz"
         val operationInput = CreateOperationRequest(
             documentId = decodedDocumentResponse.id.toString(),
             type = type,
-            "foo-bar-baz",
-            position = 0
+            content = if (OperationType.insert.equals(type)) operationContent else null,
+            position = 0,
+            length = if (OperationType.delete.equals(type)) operationContent.length else null
         )
 
         val operationResponse = client.post("documents/${decodedDocumentResponse.id}/operations") {
