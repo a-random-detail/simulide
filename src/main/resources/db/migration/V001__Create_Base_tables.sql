@@ -15,5 +15,6 @@ CREATE TABLE operations (
     position INTEGER NOT NULL,
     content TEXT,
     version INTEGER NOT NULL,
+    length INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

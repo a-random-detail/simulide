@@ -10,7 +10,7 @@ import java.util.*
 import javax.sql.DataSource
 
 @Serializable
-data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: OperationType, val position: Int, val content: String?, val version: Int)
+data class Operation(@Contextual val id: UUID, @Contextual val documentId: UUID, val type: OperationType, val position: Int, val content: String?, val version: Int, val length: Int)
 @Serializable
 data class Document(@Contextual val id: UUID, val name: String, val content: String, val version: Int)
 
@@ -67,7 +67,8 @@ class DocumentService(private val dataSource: DataSource) {
                 type = operation.type,
                 version = document.version + 1,
                 position = operation.position,
-                content = operation.content
+                content = operation.content,
+                length = operation.content?.length ?: 0
             )
 
             // Log the operation

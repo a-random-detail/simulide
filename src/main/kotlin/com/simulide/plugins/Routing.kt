@@ -3,6 +3,7 @@ package com.simulide.plugins
 import com.simulide.domain.OperationType
 import com.simulide.domain.UuidSerializerModule
 import com.simulide.plugins.domain.DocumentService
+import com.simulide.plugins.domain.uuidSerializerModule
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -21,9 +22,6 @@ data class CreateDocumentRequest(val name: String, val content: String)
 @Serializable
 data class CreateOperationRequest(val documentId: String, val type: OperationType, val content: String?, val position: Int, val length: Int?)
 
-val customSerializerModule = SerializersModule {
-    contextual(UUID::class, UuidSerializerModule)
-}
 fun Application.documentRoutes(documentService: DocumentService) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
@@ -32,7 +30,7 @@ fun Application.documentRoutes(documentService: DocumentService) {
     }
     install(ContentNegotiation) {
         json(Json {
-            serializersModule = customSerializerModule
+            serializersModule = uuidSerializerModule
             prettyPrint = true
             isLenient = true
             ignoreUnknownKeys = true
