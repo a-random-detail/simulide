@@ -19,7 +19,7 @@ fun Application.module() {
     configureMonitoring()
     configureHTTP()
     configureSecurity()
-    configureSockets(documentService)
+    configureCollaboration(documentService)
     documentRoutes(documentService)
 }
 
