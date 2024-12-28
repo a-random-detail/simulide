@@ -19,6 +19,7 @@ services:
       - simulide-network
 
   db:
+    restart: always
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: simulide-local

@@ -4,7 +4,13 @@ val logback_version: String = "1.4.14"
 val postgres_version: String = "42.5.1"
 val h2_version: String = "2.2.224"
 val serialization_version: String = "2.0.0"
-
+val flyway_version: String = "8.5.10"
+val server_tests_version: String = "2.3.3"
+val mockk_version: String = "1.13.5"
+val kotlinx_serialization_version: String = "1.6.0"
+val hikari_version: String = "5.0.1"
+val websockets_version: String = "2.3.3"
+val content_negotiation_version: String = "2.3.3"
 
 plugins {
     //TODO: fix the variable references
@@ -31,13 +37,14 @@ repositories {
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-host-common-jvm")
-    implementation("io.ktor:ktor-server-websockets-jvm")
+    implementation("io.ktor:ktor-server-websockets:$ktor_version")
     implementation("io.ktor:ktor-server-status-pages-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("org.postgresql:postgresql:$postgres_version")
+    implementation("org.flywaydb:flyway-core:$flyway_version")
     implementation("com.h2database:h2:$h2_version")
-    implementation("io.ktor:ktor-server-mustache-jvm")
+    implementation("com.zaxxer:HikariCP:$hikari_version")
     implementation("io.ktor:ktor-serialization-jackson-jvm")
     implementation("io.ktor:ktor-server-metrics-jvm")
     implementation("io.ktor:ktor-server-call-logging-jvm")
@@ -53,4 +60,13 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml")
     implementation("io.ktor:ktor-server-test-host-jvm")
     implementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+    testImplementation("io.ktor:ktor-server-tests:$server_tests_version")
+    testImplementation("io.ktor:ktor-client-cio:$server_tests_version") // CIO engine
+    testImplementation("io.ktor:ktor-client-websockets:$websockets_version") // WebSockets plugin
+    testImplementation("io.ktor:ktor-client-content-negotiation:$content_negotiation_version") // Content negotiation
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version") // JSON serialization
+    testImplementation("io.mockk:mockk:$mockk_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
 }
