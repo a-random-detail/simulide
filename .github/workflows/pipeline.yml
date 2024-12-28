@@ -39,5 +39,10 @@ jobs:
     needs: build
 
     steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Run tests via Gradle
       - name: Run tests using Gradle
         run: ./gradlew test
