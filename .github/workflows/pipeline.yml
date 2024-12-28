@@ -26,10 +26,12 @@ jobs:
       - name: Build Docker image
         run: docker build -t collaborative-editor .
 
-      # Step 4: Save Docker image as artifact
-      - name: Save Docker image as artifact
-        run: |
-          docker save collaborative-editor -o collaborative-editor.tar
+      # Step 4: Save Docker image to tarball
+      - name: Save Docker image
+        run: docker save collaborative-editor -o collaborative-editor.tar
+
+      # Step 5: Upload Docker image as artifact
+      - name: Upload Docker image artifact
         uses: actions/upload-artifact@v3
         with:
           name: collaborative-editor
